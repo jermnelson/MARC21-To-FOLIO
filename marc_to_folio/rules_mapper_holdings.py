@@ -11,7 +11,7 @@ from marc_to_folio.rules_mapper_base import RulesMapperBase
 
 class RulesMapperHoldings(RulesMapperBase):
     def __init__(
-        self, folio, instance_id_map, location_map, default_location_code, args
+        self, folio, instance_id_map, location_map, default_location_code, args, holdings_id_map = {}
     ):
         logging.debug(f"Default location code is {default_location_code}")
         self.conditions = Conditions(folio, self, "holdings", default_location_code, args.default_call_number_type_id)
@@ -21,7 +21,7 @@ class RulesMapperHoldings(RulesMapperBase):
         self.location_map = location_map
         self.schema = self.holdings_json_schema
         self.holdings_id_map = {}
-        self.ref_data_dicts = {}
+        self.ref_data_dicts = holdings_id_map
 
     def parse_hold(self, marc_record, inventory_only=False):
         """Parses a mfhd recod into a FOLIO Inventory instance object

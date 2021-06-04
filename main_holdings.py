@@ -41,6 +41,18 @@ def parse_args():
         default=False,
         type=bool,
     )
+    parser.add_argument(
+        "--previous_holdings_path",
+        "-php",
+        help="Please supply the full path to previously generated Holdingsrecords. Optional",
+        default="none"
+    )
+    parser.add_argument(
+        "--previous_holdings_id_map_path",
+        "-phmp",
+        help="Please supply the full path to previously generated Holdingsrecord Identifier map. Optional",
+        default="none"
+    )
     args = parser.parse_args()
     logging.info(f"\tresults are stored at:\t{args.result_folder}")
     logging.info(f"\tOkapi URL:\t{args.okapi_url}")

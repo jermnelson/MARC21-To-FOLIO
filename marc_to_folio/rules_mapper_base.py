@@ -441,7 +441,7 @@ class RulesMapperBase:
                 self.add_to_migration_report(
                     "Preceding and Succeding titles", f"{e_parent} created"
                 )
-                logging.log(25, json.dumps({e_parent: entity}))
+                logging.log(25, f"{e_parent}\t{json.dumps(entity)}")
             elif (
                 all(
                     v

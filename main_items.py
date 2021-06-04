@@ -4,6 +4,7 @@ import csv
 import ctypes
 import json
 import logging
+from marc_to_folio.holdings_helper import HoldingsHelper
 from marc_to_folio import custom_exceptions
 from marc_to_folio.mapping_file_transformation.mapper_base import MapperBase
 from marc_to_folio.helper import Helper
@@ -29,22 +30,6 @@ from marc_to_folio.mapping_file_transformation.item_mapper import ItemMapper
 
 csv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
 
-
-def setup_path(path, filename):
-    path = os.path.join(path, filename)
-    if not isfile(path):
-        raise Exception(f"No file called {filename} present in {path}")
-    return path
-
-
-def setup_holdings_id_map(result_path):
-    holdings_id_dict_path = setup_path(result_path, "holdings_id_map.json")
-    with open(holdings_id_dict_path, "r") as holdings_id_map_file:
-        holdings_id_map = json.load(holdings_id_map_file)
-        logging.info(f"Loaded {len(holdings_id_map)} holdings ids")
-        return holdings_id_map
-
-
 class Worker(MainBase):
     """Class that is responsible for the acutal work"""
 
@@ -52,7 +37,7 @@ class Worker(MainBase):
         self.folio_keys = []
         self.result_path = args.result_path
         self.map_folder_path = args.map_folder_path
-        self.holdings_id_map = setup_holdings_id_map(self.result_path)
+        self.holdings_id_map = HoldingsHelper.setup_holdings_id_map(self.result_path)
         self.folio_client = FolioClient(
             args.okapi_url, args.tenant_id, args.username, args.password
         )
@@ -82,7 +67,7 @@ class Worker(MainBase):
         self, folio_property_name: str, map_file_name: str, required: bool = True
     ):
         if folio_property_name in self.folio_keys or required:
-            map_path = setup_path(self.map_folder_path, map_file_name)
+            map_path = Helper.setup_path(self.map_folder_path, map_file_name)
             try:
                 with open(map_path) as map_file:
                     map = list(csv.DictReader(map_file, dialect="tsv"))
@@ -108,7 +93,7 @@ class Worker(MainBase):
             return None
 
     def setup_records_map(self, args):
-        items_map_path = setup_path(args.map_folder_path, "item_mapping.json")
+        items_map_path = Helper.setup_path(args.map_folder_path, "item_mapping.json")
         with open(items_map_path) as items_mapper_f:
             items_map = json.load(items_mapper_f)
             logging.info(f'{len(items_map["data"])} fields in item mapping file map')

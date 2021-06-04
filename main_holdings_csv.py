@@ -6,6 +6,7 @@ import csv
 import ctypes
 import json
 import logging
+from marc_to_folio.holdings_helper import HoldingsHelper
 import os
 import time
 import traceback
@@ -209,7 +210,7 @@ class Worker(MainBase):
             yield c
 
     def merge_holding_in(self, folio_holding):
-        new_holding_key = self.to_key(folio_holding, self.holdings_merge_criteria)
+        new_holding_key = HoldingsHelper.to_key(folio_holding, self.holdings_merge_criteria)
         existing_holding = self.holdings.get(new_holding_key, None)
         exclude = (
             self.holdings_merge_criteria.startswith("u_")
@@ -224,7 +225,8 @@ class Worker(MainBase):
             self.mapper.add_to_migration_report(
                 "General statistics", "Holdings already created from Item"
             )
-            self.merge_holding(new_holding_key, existing_holding, folio_holding)
+            HoldingsHelper.merge_holding(existing_holding, folio_holding)
+            self.holdings[new_holding_key] = existing_holding
 
     def wrap_up(self):
         logging.info("Done. Wrapping up...")
@@ -257,45 +259,6 @@ class Worker(MainBase):
             self.mapper.write_migration_report(migration_report_file)
             self.mapper.print_mapping_report(migration_report_file, self.total_records)
         logging.info("All done!")
-
-    @staticmethod
-    def to_key(holding, fields_criteria):
-        """creates a key if key values in holding record
-        to determine uniquenes"""
-        try:
-            """creates a key of key values in holding record
-            to determine uniquenes"""
-            call_number = (
-                "".join(holding.get("callNumber", "").split())
-                if "c" in fields_criteria
-                else ""
-            )
-            instance_id = holding["instanceId"] if "b" in fields_criteria else ""
-            location_id = (
-                holding["permanentLocationId"] if "l" in fields_criteria else ""
-            )
-            return "-".join([instance_id, call_number, location_id, ""])
-        except Exception as ee:
-            print(holding)
-            raise ee
-
-    def merge_holding(self, key, old_holdings_record, new_holdings_record):
-        # TODO: Move to interface or parent class and make more generic
-        if self.holdings[key].get("notes", None):
-            self.holdings[key]["notes"].extend(new_holdings_record.get("notes", []))
-            self.holdings[key]["notes"] = dedupe(self.holdings[key].get("notes", []))
-        if self.holdings[key].get("holdingsStatements", None):
-            self.holdings[key]["holdingsStatements"].extend(
-                new_holdings_record.get("holdingsStatements", [])
-            )
-            self.holdings[key]["holdingsStatements"] = dedupe(
-                self.holdings[key]["holdingsStatements"]
-            )
-        if self.holdings[key].get("formerIds", None):
-            self.holdings[key]["formerIds"].extend(
-                new_holdings_record.get("formerIds", [])
-            )
-            self.holdings[key]["formerIds"] = list(set(self.holdings[key]["formerIds"]))
 
 
 def parse_args():
@@ -337,6 +300,18 @@ def parse_args():
         default=False,
         type=bool,
     )
+    parser.add_argument(
+        "--previous_holdings_path",
+        "-php",
+        help="Optional. Please supply the full path to previously generated Holdingsrecords.",
+        default="none"
+    )
+    parser.add_argument(
+        "--previous_holdings_id_map_path",
+        "-phmp",
+        help="Optional. Please supply the full path to previously generated Holdingsrecord Identifier map",
+        default="none"
+    )
     args = parser.parse_args()
     logging.info(f"\tresults are stored at:\t{args.result_path}")
     logging.info(f"\tOkapi URL:\t{args.okapi_url}")
@@ -344,19 +319,6 @@ def parse_args():
     logging.info(f"\tUsername:\t{args.username}")
     logging.info(f"\tPassword:\tSecret")
     return args
-
-
-def setup_path(path, filename):
-    new_path = ""
-    try:
-        new_path = os.path.join(path, filename)
-    except:
-        raise Exception(
-            f"Something went wrong when joining {path} and {filename} into a path"
-        )
-    if not isfile(new_path):
-        raise Exception(f"No file called {filename} present in {path}")
-    return new_path
 
 
 def dedupe(list_of_dicts):
@@ -394,10 +356,10 @@ def main():
 
     # All the paths...
     try:
-        instance_id_dict_path = setup_path(args.result_path, "instance_id_map.json")
-        holdings_map_path = setup_path(args.map_path, "holdingsrecord_mapping.json")
-        location_map_path = setup_path(args.map_path, "locations.tsv")
-        call_number_type_map_path = setup_path(
+        instance_id_dict_path = Helper.setup_path(args.result_path, "instance_id_map.json")
+        holdings_map_path = Helper.setup_path(args.map_path, "holdingsrecord_mapping.json")
+        location_map_path = Helper.setup_path(args.map_path, "locations.tsv")
+        call_number_type_map_path = Helper.setup_path(
             args.map_path, "call_number_type_mapping.tsv"
         )
         # Files found, let's go!

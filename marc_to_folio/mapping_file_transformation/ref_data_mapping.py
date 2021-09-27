@@ -69,7 +69,8 @@ class RefDataMapping(object):
                     mapping["folio_id"] = t[0]
             except TransformationProcessError as te:
                 raise te
-            except Exception:
+            except Exception as ee:
+                logging.error(ee)
                 logging.info(json.dumps(self.map, indent=4))
                 raise TransformationProcessError(
                     f'{mapping[f"folio_{self.key_type}"]} could not be found in FOLIO'

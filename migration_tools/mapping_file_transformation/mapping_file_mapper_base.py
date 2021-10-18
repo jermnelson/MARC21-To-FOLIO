@@ -19,7 +19,7 @@ empty_vals = ["Not mapped", None, ""]
 
 class MappingFileMapperBase(MapperBase):
     def __init__(
-        self, folio_client: FolioClient, schema, record_map, statistical_codes_map
+        self, folio_client: FolioClient, schema, record_map, statistical_codes_map = None
     ):
         super().__init__()
         self.schema = schema

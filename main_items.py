@@ -47,7 +47,6 @@ class Worker(MainBase):
         self, source_files, folio_client: FolioClient, folder_structure: FolderStructure
     ):
         super().__init__()
-        self.total_records = 0
         self.folio_keys = []
         self.folder_structure = folder_structure
         self.folio_client = folio_client

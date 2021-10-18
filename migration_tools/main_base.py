@@ -2,6 +2,7 @@ import logging
 import logging.handlers
 import sys
 import time
+from argparse_prompt import PromptParser
 
 from migration_tools.custom_exceptions import TransformationRecordFailedError
 from migration_tools.folder_structure import FolderStructure
@@ -10,6 +11,7 @@ from migration_tools.folder_structure import FolderStructure
 class MainBase:
     def __init__(self) -> None:
         self.num_exeptions = 0
+        self.total_records = 0
 
     def log_and_exit_if_too_many_errors(
         self, error: TransformationRecordFailedError, idx
@@ -23,6 +25,14 @@ class MainBase:
                 f"{self.num_exeptions / (1 + idx)} Stopping."
             )
             sys.exit()
+
+    @staticmethod
+    def add_common_arguments(parser: PromptParser):
+        parser.add_argument("base_folder", help="Base folder of the client.")
+        parser.add_argument("okapi_url", help=("OKAPI base url"))
+        parser.add_argument("tenant_id", help=("id of the FOLIO tenant."))
+        parser.add_argument("username", help=("the api user"))
+        parser.add_argument("--password", help="the api users password", secure=True)
 
     @staticmethod
     def print_progress(num_processed, start_time):

@@ -258,6 +258,8 @@ class BatchPoster(MigrationTaskBase):
             raise TransformationProcessError("", "HTTP 400. Somehting is wrong. Quitting")
         elif self.task_config.object_type == "SRS":
             if response.status_code == 500:
+                if len(batch) == 1:
+                    logging.info(batch)
                 raise TransformationRecordFailedError(
                     "",
                     f"HTTP {response.status_code}\t"
